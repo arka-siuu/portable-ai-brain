@@ -4,6 +4,9 @@
 
 Built on DataHaven + Quai Network
 
+**Live Demo:** [https://226e-115-241-193-70.ngrok-free.app/](https://226e-115-241-193-70.ngrok-free.app/)  
+**Video Presentation:** [https://youtu.be/Lg-3nI6EE3M](https://youtu.be/Lg-3nI6EE3M)
+
 ---
 
 ## Problem
