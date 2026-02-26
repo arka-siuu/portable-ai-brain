@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧠 Portable AI Brain — DataHaven Demo</title>
+<style>
+  /* ─── Design System ─────────────────────────────────────────────────────── */
+  :root {
+    --bg: #0e0f14;
+    --surface: #16181f;
+    --surface2: #1e2029;
+    --border: #2a2d3a;
+    --accent: #6c63ff;
+    --accent-dim: #3d3870;
+    --green: #22c55e;
+    --green-dim: #14532d;
+    --red: #ef4444;
+    --yellow: #eab308;
+    --text: #e2e4ed;
+    --muted: #6b7280;
+    --chain: #38bdf8;
+    --memory: #a78bfa;
+    --font: 'Inter', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    overflow: hidden;
+  }
+
+  /* ─── Header ──────────────────────────────────────────────────────────── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .logo {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .logo-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    background: var(--accent);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* Provider selector */
+  .controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-left: auto; }
+
+  label.ctrl-label { font-size: 0.75rem; color: var(--muted); font-weight: 500; }
+
+  select#provider {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-family: var(--font);
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  select#provider:focus { border-color: var(--accent); }
+
+  /* Brain toggle */
+  .toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s;
+  }
+  .toggle-wrap.active { border-color: var(--green); background: var(--green-dim); }
+
+  .toggle-dot {
+    width: 32px; height: 17px;
+    background: var(--border);
+    border-radius: 20px;
+    position: relative;
+    transition: background 0.2s;
+  }
+  .toggle-dot::after {
+    content: '';
+    position: absolute;
+    left: 2px; top: 2px;
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: all 0.2s;
+  }
+  .toggle-wrap.active .toggle-dot { background: var(--green); }
+  .toggle-wrap.active .toggle-dot::after { left: 17px; background: #fff; }
+
+  .toggle-label { font-size: 0.8rem; font-weight: 600; }
+  .toggle-wrap.active .toggle-label { color: var(--green); }
+
+  /* Clear button */
+  button.clear-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  button.clear-btn:hover { border-color: var(--red); color: var(--red); }
+
+  /* Memory count badge */
+  .mem-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--accent-dim);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-family: var(--mono);
+  }
+
+  /* ─── Main layout ─────────────────────────────────────────────────────── */
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    overflow: hidden;
+  }
+
+  /* ─── Chat Panel ──────────────────────────────────────────────────────── */
+  .chat-panel {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  .messages {
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .message {
+    max-width: 80%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    animation: fadeUp 0.25s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0);   }
+  }
+
+  .message.user {
+    align-self: flex-end;
+    background: var(--accent);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+
+  .message.assistant {
+    align-self: flex-start;
+    background: var(--surface2);
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .message .meta {
+    font-size: 0.68rem;
+    color: rgba(255,255,255,0.55);
+    margin-top: 6px;
+  }
+  .message.assistant .meta { color: var(--muted); }
+
+  .message .brain-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 20px;
+    margin-left: 6px;
+    vertical-align: middle;
+    letter-spacing: 0.04em;
+  }
+  .brain-tag.on { background: var(--green-dim); color: var(--green); }
+  .brain-tag.off { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+
+  /* Empty state */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 12px;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  .empty-state .icon { font-size: 2.5rem; }
+
+  /* Input area */
+  .input-area {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  textarea#msg {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 0.88rem;
+    font-family: var(--font);
+    padding: 12px 14px;
+    resize: none;
+    min-height: 46px;
+    max-height: 130px;
+    outline: none;
+    transition: border-color 0.2s;
+    line-height: 1.5;
+  }
+  textarea#msg:focus { border-color: var(--accent); }
+
+  button#send {
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    font-size: 0.88rem;
+    font-weight: 600;
+    font-family: var(--font);
+    padding: 12px 22px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    height: 46px;
+  }
+  button#send:hover { background: #5750d4; }
+  button#send:disabled { background: var(--surface2); color: var(--muted); cursor: not-allowed; }
+
+  /* Typing indicator */
+  .typing { display: flex; gap: 5px; align-items: center; padding: 10px 16px; }
+  .typing span {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--muted);
+    animation: bounce 1.2s infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+    40% { transform: scale(1.2); opacity: 1; }
+  }
+
+  /* ─── DataHaven Log Panel ─────────────────────────────────────────────── */
+  .log-panel {
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .log-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .live-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .log-entries {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+  }
+
+  .log-entry {
+    padding: 6px 10px;
+    border-radius: 6px;
+    animation: fadeUp 0.3s ease;
+    word-break: break-all;
+    line-height: 1.5;
+  }
+
+  .log-entry.info    { color: var(--muted); background: transparent; }
+  .log-entry.memory  { color: var(--memory); background: rgba(167,139,250,0.07); }
+  .log-entry.chain   { color: var(--chain);  background: rgba(56,189,248,0.07); }
+  .log-entry.success { color: var(--green);  background: rgba(34,197,94,0.07); }
+  .log-entry.error   { color: var(--red);    background: rgba(239,68,68,0.07); }
+
+  /* Stats strip */
+  .stats-strip {
+    border-top: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .stat-row { display: flex; justify-content: space-between; align-items: center; }
+  .stat-label { font-size: 0.72rem; color: var(--muted); }
+  .stat-value { font-size: 0.72rem; font-family: var(--mono); color: var(--text); }
+  .stat-value.highlight { color: var(--accent); font-weight: 600; }
+  .bucket-id { word-break: break-all; font-size: 0.65rem; color: var(--chain); }
+</style>
+</head>
+<body>
+
+<!-- ─── Header ──────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="logo">
+    🧠 Portable AI Brain
+    <span class="logo-badge">DataHaven MVP</span>
+  </div>
+
+  <div class="controls">
+    <label class="ctrl-label">Provider</label>
+    <select id="provider"></select>
+
+    <div class="toggle-wrap" id="brainToggle" onclick="toggleBrain()">
+      <div class="toggle-dot"></div>
+      <span class="toggle-label">Brain OFF</span>
+    </div>
+
+    <button class="clear-btn" onclick="clearChat()">🧹 Clear Chat</button>
+
+    <div class="mem-badge" id="memBadge">0 memories</div>
+  </div>
+</header>
+
+<!-- ─── Main ─────────────────────────────────────────────────────────────────── -->
+<div class="main">
+
+  <!-- Chat Panel -->
+  <div class="chat-panel">
+    <div class="messages" id="messages">
+      <div class="empty-state" id="emptyState">
+        <div class="icon">💬</div>
+        <div>Start chatting to build your brain vault</div>
+        <div style="font-size:0.78rem;color:#4b5563">Memories are stored encrypted on DataHaven</div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <textarea id="msg" rows="1" placeholder="Type your message… (Enter to send, Shift+Enter for newline)"></textarea>
+      <button id="send" onclick="sendMessage()">Send →</button>
+    </div>
+  </div>
+
+  <!-- DataHaven Log Panel -->
+  <div class="log-panel">
+    <div class="log-header">
+      <div class="live-dot"></div>
+      DataHaven Activity
+    </div>
+
+    <div class="log-entries" id="logEntries">
+      <div class="log-entry info">Connecting to DataHaven testnet…</div>
+    </div>
+
+    <div class="stats-strip">
+      <div class="stat-row">
+        <span class="stat-label">Bucket ID</span>
+      </div>
+      <div class="bucket-id" id="statBucket">—</div>
+      <div class="stat-row" style="margin-top:6px">
+        <span class="stat-label">Memories on-chain</span>
+        <span class="stat-value highlight" id="statMemCount">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Chat messages</span>
+        <span class="stat-value" id="statMsgCount">0</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let brainOn = false;
+let selectedModel = '';
+// Per-provider local chat display (messages array for UI rendering only)
+const chatDisplays = {};
+let totalMsgCount = 0;
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+async function init() {
+  // Load providers from server
+  const res = await fetch('/api/providers');
+  const providers = await res.json();
+  const sel = document.getElementById('provider');
+  providers.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.label;
+    sel.appendChild(opt);
+  });
+  selectedModel = providers[0].id;
+  sel.addEventListener('change', () => {
+    selectedModel = sel.value;
+    renderMessages();
+  });
+
+  // Start polling log + stats
+  pollLog();
+  pollStats();
+}
+
+// ─── Brain toggle ─────────────────────────────────────────────────────────────
+function toggleBrain() {
+  brainOn = !brainOn;
+  const wrap = document.getElementById('brainToggle');
+  const lbl = wrap.querySelector('.toggle-label');
+  if (brainOn) {
+    wrap.classList.add('active');
+    lbl.textContent = 'Brain ON';
+  } else {
+    wrap.classList.remove('active');
+    lbl.textContent = 'Brain OFF';
+  }
+}
+
+// ─── Clear chat ───────────────────────────────────────────────────────────────
+async function clearChat() {
+  // Clear local display
+  chatDisplays[selectedModel] = [];
+  renderMessages();
+  totalMsgCount = 0;
+  document.getElementById('statMsgCount').textContent = '0';
+
+  // Tell server to clear history for this provider
+  await fetch('/api/clear', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: selectedModel }),
+  });
+
+  addLogEntry('🧹 Chat cleared — brain vault intact on DataHaven', 'success');
+}
+
+// ─── Send message ─────────────────────────────────────────────────────────────
+async function sendMessage() {
+  const input = document.getElementById('msg');
+  const userMessage = input.value.trim();
+  if (!userMessage) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+
+  // Add user bubble
+  addMessage('user', userMessage);
+  totalMsgCount++;
+
+  // Show typing indicator
+  const typingId = addTypingIndicator();
+
+  document.getElementById('send').disabled = true;
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: selectedModel, userMessage, loadBrain: brainOn }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Server error');
+    }
+
+    const data = await res.json();
+    removeTypingIndicator(typingId);
+    addMessage('assistant', data.reply, { loadBrain: data.loadBrain, memoryCount: data.memoryCount });
+    totalMsgCount++;
+    document.getElementById('statMsgCount').textContent = totalMsgCount;
+
+  } catch (e) {
+    removeTypingIndicator(typingId);
+    addMessage('assistant', `❌ Error: ${e.message}`);
+  } finally {
+    document.getElementById('send').disabled = false;
+    input.focus();
+  }
+}
+
+// ─── UI helpers ───────────────────────────────────────────────────────────────
+function addMessage(role, text, meta = null) {
+  if (!chatDisplays[selectedModel]) chatDisplays[selectedModel] = [];
+  chatDisplays[selectedModel].push({ role, text, meta });
+  renderMessages();
+}
+
+function renderMessages() {
+  const msgs = chatDisplays[selectedModel] || [];
+  const container = document.getElementById('messages');
+  const empty = document.getElementById('emptyState');
+
+  if (msgs.length === 0) {
+    empty.style.display = 'flex';
+    // Remove all message divs
+    container.querySelectorAll('.message').forEach(el => el.remove());
+    return;
+  }
+  empty.style.display = 'none';
+
+  container.querySelectorAll('.message').forEach(el => el.remove());
+
+  msgs.forEach(m => {
+    const div = document.createElement('div');
+    div.className = `message ${m.role}`;
+    div.textContent = m.text;
+
+    if (m.meta && m.role === 'assistant') {
+      const metaDiv = document.createElement('div');
+      metaDiv.className = 'meta';
+      const brainTag = m.meta.loadBrain
+        ? `<span class="brain-tag on">🧠 Brain ON · ${m.meta.memoryCount} mem</span>`
+        : `<span class="brain-tag off">🚫 Brain OFF</span>`;
+      metaDiv.innerHTML = `${selectedModel.split('/').pop()} ${brainTag}`;
+      div.appendChild(metaDiv);
+    }
+    container.appendChild(div);
+  });
+
+  container.scrollTop = container.scrollHeight;
+}
+
+function addTypingIndicator() {
+  const id = 'typing-' + Date.now();
+  const container = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.id = id;
+  div.className = 'message assistant';
+  div.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  document.getElementById('emptyState').style.display = 'none';
+  return id;
+}
+
+function removeTypingIndicator(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+// ─── Log polling ──────────────────────────────────────────────────────────────
+let lastLogLength = 0;
+async function pollLog() {
+  try {
+    const res = await fetch('/api/log');
+    const entries = await res.json();
+
+    if (entries.length !== lastLogLength) {
+      lastLogLength = entries.length;
+      const container = document.getElementById('logEntries');
+      container.innerHTML = '';
+      entries.forEach(entry => {
+        const type = detectLogType(entry);
+        addLogEntry(entry, type, false);
+      });
+    }
+  } catch {}
+  setTimeout(pollLog, 1500);
+}
+
+function detectLogType(msg) {
+  if (msg.includes('Fingerprint') || msg.includes('fileKey') || msg.includes('tx')) return 'chain';
+  if (msg.includes('extracted') || msg.includes('Memory') || msg.includes('brain')) return 'memory';
+  if (msg.includes('✅') || msg.includes('Stored')) return 'success';
+  if (msg.includes('❌') || msg.includes('failed')) return 'error';
+  return 'info';
+}
+
+function addLogEntry(msg, type = 'info', prepend = true) {
+  const container = document.getElementById('logEntries');
+  const div = document.createElement('div');
+  div.className = `log-entry ${type}`;
+  div.textContent = msg;
+  if (prepend) container.prepend(div);
+  else container.appendChild(div);
+}
+
+// ─── Stats polling ────────────────────────────────────────────────────────────
+async function pollStats() {
+  try {
+    const res = await fetch('/api/stats');
+    const data = await res.json();
+    document.getElementById('statBucket').textContent = data.bucketId || '—';
+    document.getElementById('statMemCount').textContent = data.memoryCount;
+    document.getElementById('memBadge').textContent = `${data.memoryCount} memor${data.memoryCount === 1 ? 'y' : 'ies'}`;
+  } catch {}
+  setTimeout(pollStats, 3000);
+}
+
+// ─── Enter key sends ──────────────────────────────────────────────────────────
+document.getElementById('msg').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+// Auto-resize textarea
+document.getElementById('msg').addEventListener('input', function () {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 130) + 'px';
+});
+
+init();
+</script>
+</body>
+</html>

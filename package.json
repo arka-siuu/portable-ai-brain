@@ -1,0 +1,32 @@
+{
+  "name": "data-haven",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "demo": "tsx src/index.ts",
+    "serve": "tsx src/server/app.ts",
+    "test": "node --test --import tsx/esm src/tests/memory.test.ts src/tests/storage.test.ts src/tests/distiller.test.ts"
+  },
+  "dependencies": {
+    "@polkadot/api": "^16.5.4",
+    "@polkadot/types": "^16.5.4",
+    "@polkadot/util-crypto": "^14.0.1",
+    "@storagehub-sdk/core": "^0.4.4",
+    "@storagehub-sdk/msp-client": "^0.4.4",
+    "@storagehub/api-augment": "^0.4.0",
+    "@storagehub/types-bundle": "^0.4.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "groq-sdk": "^0.37.0",
+    "viem": "^2.46.3"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "tsx": "^4.21.0",
+    "typescript": "^5.3.3"
+  }
+}
